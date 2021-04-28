@@ -30,71 +30,29 @@ const linearify = async ({
         }
     }
     newImg.write(output);
+
+    console.log('Write complete');
+    console.log(JSON.stringify({
+        width: dimensions.width,
+        height: dimensions.height,
+        frameCount: framesX * framesY,
+        name: '',
+        image: '',
+        animations: {}
+    }, null, 2));
 }
 
-const spritesheetify = ({
-    img,
-    framesX, 
-    framesY,
-    animations,
-    spritesheet='spritesheet.css'
-}) => {
-    if (!framesX) throw new Error('x is a required parameter');
-    if (!framesY) throw new Error('y is a required parameter');
-    if (!img) throw new Error('img is a required parameter');
-    const dimensions = sizeOf(img);
-    const newImageWidth = dimensions.width * framesY;
-    const frameHeight = dimensions.height / framesY;
-    const frameWidth = dimensions.width / framesX;
 
-    const allAnimation = `.all {
-        width: ${frameWidth}px;
-        height: ${frameHeight}px;
-        background-image: url("${img}");
-        image-rendering: pixelated;
-        animation: all-animation 2s steps(${framesX * framesY}) infinite;
-    }
-
-    @keyframes all-animation {
-        from { background-position:    0px; }
-          to { background-position: -${newImageWidth}px; }
-     }
-    `
-
-    let animationsToGenerate = [allAnimation];
-    if (animations && fs.existsSync(animations)){
-        const animationStr = fs.readFileSync(animations);
-        const animationObj = JSON.parse(animationStr);
-        for (const animation in animationObj){
-            const {end, start, speed} = animationObj[animation];
-            animationsToGenerate.push(`.${animation} {
-                width: ${frameWidth}px;
-                height: ${frameHeight}px;
-                background-image: url("${img}");
-                image-rendering: pixelated;
-                animation: ${animation}-animation ${speed}s steps(${end-start + 1}) infinite;
-            }
-        
-            @keyframes ${animation}-animation {
-                from { background-position:    ${-1 * start * frameWidth}px; }
-                  to { background-position: ${-1 * (end+1) * frameWidth}px; }
-             }
-            `);
-        }
-    }
-    const cssString = animationsToGenerate.join('\n');
-    fs.writeFileSync(spritesheet, cssString, 'utf8');
-}
 
 try {
     const framesX = argv['x'];
     const framesY = argv['y'];
     const img = argv['_'][0];
     const output = argv['o'];
-    const animations = argv['a'];
+    // const animations = argv['a'];
     
     linearify({ framesX, framesY, img, output });
-    spritesheetify({ framesX, framesY, img, animations });
+    // spritesheetify({ framesX, framesY, img, animations });
 
 } catch (e){
     console.error('Error: ' + e.message);
